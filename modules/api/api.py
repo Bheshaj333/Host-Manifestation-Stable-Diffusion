@@ -12,6 +12,7 @@ from fastapi.exceptions import HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from secrets import compare_digest
+from fastapi.middleware.cors import CORSMiddleware
 
 import modules.shared as shared
 from modules import sd_samplers, deepbooru, sd_hijack, images, scripts, ui, postprocessing, errors
@@ -30,7 +31,6 @@ from modules import devices
 from typing import Dict, List, Any
 import piexif
 import piexif.helper
-
 
 def upscaler_to_index(name: str):
     try:
@@ -165,6 +165,14 @@ def api_middleware(app: FastAPI):
 
 class Api:
     def __init__(self, app: FastAPI, queue_lock: Lock):
+
+        # Enable CORS for all routes
+        origins = ["http://localhost", "http://localhost:3000"]  # list of allowed origins
+        methods = ["GET", "POST", "PUT", "DELETE"]  # list of allowed HTTP methods
+        allow_headers = ["*"]  # list of allowed headers
+        app.add_middleware(CORSMiddleware, allow_origins=origins, allow_methods=methods,
+                           allow_headers=allow_headers)
+
         if shared.cmd_opts.api_auth:
             self.credentials = {}
             for auth in shared.cmd_opts.api_auth.split(","):
